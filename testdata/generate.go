@@ -37,7 +37,9 @@ type line struct {
 	s string
 }
 
-func at(h, m, s int) time.Time { return day.Add(time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second) }
+func at(h, m, s int) time.Time {
+	return day.Add(time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second)
+}
 
 func sshd(t time.Time, msg string) {
 	pid++
