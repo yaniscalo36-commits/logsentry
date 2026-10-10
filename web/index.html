@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>logsentry · analyse de logs en direct</title>
+  <meta name="description" content="Analysez vos logs SSH et web directement dans votre navigateur : détection de brute-force, injections SQL, XSS, scans. Vos logs ne quittent jamais votre ordinateur.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a href="/#projects" class="back">← Portfolio de Yanis Calonge</a>
+    <a href="https://github.com/yaniscalo36-commits/logsentry" target="_blank" rel="noopener" class="gh">Code source</a>
+  </header>
+
+  <main class="wrap">
+    <p class="tool">$ logsentry --live</p>
+    <h1>Analysez vos logs <span class="accent">en direct</span></h1>
+    <p class="lead">
+      Déposez un <code>auth.log</code> (SSH) ou un <code>access.log</code> (Nginx / Apache).
+      logsentry y détecte le brute-force, les comptes compromis, les injections SQL, les XSS et les scans,
+      avec la technique MITRE ATT&amp;CK correspondante.
+    </p>
+
+    <div class="privacy">
+      <strong>🔒 Vos logs ne quittent pas votre ordinateur.</strong>
+      L'analyse tourne entièrement dans votre navigateur grâce à WebAssembly : aucune donnée n'est envoyée.
+      La politique de sécurité de cette page bloque toute connexion vers un autre site, et ce site, entièrement statique,
+      n'a aucun serveur capable de recevoir des données.
+    </div>
+
+    <section class="input">
+      <label class="drop" id="drop">
+        <input type="file" id="file-input" multiple accept=".log,.txt,text/plain">
+        <span class="drop-icon">⇪</span>
+        <span><strong>Glissez vos fichiers de log ici</strong> ou cliquez pour les choisir</span>
+        <span class="hint">Fichiers texte (.log, .txt) · 50 Mo maximum · les .gz doivent être décompressés</span>
+      </label>
+
+      <ul class="files" id="files"></ul>
+
+      <details class="paste">
+        <summary>…ou collez des lignes de log</summary>
+        <textarea id="paste" rows="7" spellcheck="false" placeholder="Oct  9 14:02:11 srv sshd[1234]: Failed password for root from 203.0.113.45 port 51234 ssh2"></textarea>
+      </details>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="analyze" disabled>Analyser</button>
+        <button type="button" class="btn btn-ghost" id="sample" disabled>Essayer avec des logs de démo</button>
+        <span class="status" id="status" role="status" aria-live="polite">Chargement du moteur d'analyse…</span>
+      </div>
+    </section>
+
+    <section class="results" id="results" hidden>
+      <div class="summary" id="summary"></div>
+      <div class="downloads">
+        <a class="btn btn-ghost btn-sm" id="dl-html" download="logsentry-rapport.html">Télécharger le rapport HTML</a>
+        <a class="btn btn-ghost btn-sm" id="dl-json" download="logsentry-rapport.json">Télécharger le JSON</a>
+      </div>
+      <iframe id="report" title="Rapport logsentry" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+    </section>
+  </main>
+
+  <footer class="foot">
+    logsentry · projet personnel de <a href="/">Yanis Calonge</a> · écrit en Go, compilé en WebAssembly
+  </footer>
+
+  <script src="wasm_exec.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

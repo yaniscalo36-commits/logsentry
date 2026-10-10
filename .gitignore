@@ -9,3 +9,9 @@ logsentry
 
 .vscode/
 .idea/
+
+# Démo web : fichiers générés par web/build.sh
+!web/*.html
+web/logsentry.wasm
+web/wasm_exec.js
+web/samples/
