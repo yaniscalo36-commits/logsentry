@@ -44,10 +44,15 @@ func Analyze(events []Event, st Stats, cfg Config) *Report {
 			byIP[a.IP] = at
 		}
 		at.Alerts++
-		at.Events += a.Count
 		at.Rules = append(at.Rules, a.Rule)
 		if a.Severity > at.MaxSeverity {
 			at.MaxSeverity = a.Severity
+		}
+	}
+	// Nombre réel d'événements par IP (une même requête peut déclencher plusieurs règles).
+	for _, e := range events {
+		if at := byIP[e.IP]; at != nil {
+			at.Events++
 		}
 	}
 	for _, at := range byIP {
