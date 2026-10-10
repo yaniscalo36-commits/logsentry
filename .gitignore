@@ -1,0 +1,11 @@
+# Binaires
+*.exe
+logsentry
+/bin/
+
+# Rapports générés
+*.html
+!templates/*.html
+
+.vscode/
+.idea/
