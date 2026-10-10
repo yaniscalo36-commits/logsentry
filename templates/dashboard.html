@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>logsentry · tableau de bord</title>
+<style>
+  :root {
+    --bg: #07090f; --surface: #111827; --surface-2: #0c111b; --border: rgba(148,163,184,.16);
+    --text: #e6edf6; --dim: #94a3b8; --faint: #64748b; --accent: #22d3a6;
+    --critical: #e879f9; --high: #f87171; --medium: #fbbf24; --low: #60a5fa;
+    --mono: ui-monospace, "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.6 system-ui, "Segoe UI", sans-serif; padding: 36px 16px; }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  a { color: var(--accent); }
+  .tool { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  h1 { font-size: 26px; margin: 2px 0 4px; }
+  .meta { font-family: var(--mono); font-size: 12.5px; color: var(--faint); }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); margin: 32px 0 12px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 24px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi b { display: block; font-size: 28px; line-height: 1.2; }
+  .kpi span { font-size: 13px; color: var(--dim); }
+  .kpi.critical b { color: var(--critical); } .kpi.high b { color: var(--high); }
+  .kpi.medium b { color: var(--medium); } .kpi.low b { color: var(--low); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .timeline { width: 100%; height: auto; display: block; }
+  .timeline text { fill: var(--faint); font: 11px var(--mono); }
+  .t-total { fill: #334155; } .t-bad { fill: var(--high); }
+  .legend { display: flex; gap: 18px; font-size: 13px; color: var(--dim); margin-top: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  .alert { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+  .alert.critical { border-left-color: var(--critical); background: linear-gradient(90deg, rgba(232,121,249,.08), var(--surface) 40%); }
+  .alert.high { border-left-color: var(--high); } .alert.medium { border-left-color: var(--medium); } .alert.low { border-left-color: var(--low); }
+  .alert-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .badge { font: 700 11px var(--mono); text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--bg); }
+  .badge.critical { background: var(--critical); } .badge.high { background: var(--high); }
+  .badge.medium { background: var(--medium); } .badge.low { background: var(--low); }
+  .alert-title { font-weight: 650; font-size: 16px; }
+  .ip { font-family: var(--mono); font-size: 13px; color: var(--accent); margin-left: auto; }
+  .alert-meta { font-family: var(--mono); font-size: 12px; color: var(--faint); margin: 4px 0 8px; }
+  .alert p { color: var(--dim); font-size: 14px; }
+  .advice { margin-top: 8px; padding: 8px 12px; border-radius: 0 8px 8px 0; background: rgba(34,211,166,.07); border-left: 2px solid var(--accent); color: var(--text) !important; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--dim); }
+  pre { margin-top: 8px; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; font: 12px/1.6 var(--mono); color: var(--dim); overflow-x: auto; white-space: pre; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: 0; }
+  td.mono { font-family: var(--mono); font-size: 13px; }
+  .rules { color: var(--faint); font-family: var(--mono); font-size: 12px; }
+  .empty { text-align: center; color: var(--accent); padding: 30px; }
+  footer { text-align: center; color: var(--faint); font: 12px var(--mono); margin-top: 32px; }
+  @media (max-width: 700px) { .kpis { grid-template-columns: repeat(2, 1fr); } .ip { margin-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="tool">$ logsentry</p>
+  <h1>Rapport d'analyse des logs</h1>
+  <p class="meta">{{len .Stats.Files}} fichier(s) · {{.Stats.Lines}} lignes · {{.Stats.Events}} événements{{if .Stats.Events}} · {{fmtTime .Stats.First}} → {{fmtTime .Stats.Last}}{{end}} · généré le {{now}}</p>
+
+  <div class="kpis">
+    <div class="kpi"><b>{{.Stats.Events}}</b><span>événements</span></div>
+    <div class="kpi critical"><b>{{.Count (sev "critique")}}</b><span>critiques</span></div>
+    <div class="kpi high"><b>{{.Count (sev "haute")}}</b><span>hautes</span></div>
+    <div class="kpi medium"><b>{{.Count (sev "moyenne")}}</b><span>moyennes</span></div>
+    <div class="kpi low"><b>{{.Count (sev "faible")}}</b><span>faibles</span></div>
+  </div>
+
+  {{if .Timeline}}
+  <h2>Activité par heure</h2>
+  <div class="panel">
+    {{timeline .Timeline}}
+    <div class="legend"><span><i class="t-legend-total" style="background:#334155"></i>trafic total</span><span><i style="background:var(--high)"></i>trafic des IP malveillantes</span></div>
+  </div>
+  {{end}}
+
+  <h2>Alertes ({{len .Alerts}})</h2>
+  {{if not .Alerts}}<div class="panel empty">✔ Aucune activité suspecte détectée.</div>{{end}}
+  {{range .Alerts}}
+  <div class="alert {{sevClass .Severity}}">
+    <div class="alert-head">
+      <span class="badge {{sevClass .Severity}}">{{.Severity}}</span>
+      <span class="alert-title">{{.Title}}</span>
+      <span class="ip">{{.IP}}</span>
+    </div>
+    <p class="alert-meta">{{fmtTime .First}}{{if not (same .First .Last)}} → {{fmtHour .Last}}{{end}} · {{.Count}} événement(s) · <a href="{{.Technique.URL}}" target="_blank" rel="noopener">MITRE {{.Technique.ID}}</a> {{.Technique.Name}}</p>
+    <p>{{.Detail}}</p>
+    <p class="advice">→ {{.Advice}}</p>
+    {{if .Evidence}}
+    <details>
+      <summary>Voir les lignes de log ({{len .Evidence}})</summary>
+      <pre>{{range .Evidence}}{{.}}
+{{end}}</pre>
+    </details>
+    {{end}}
+  </div>
+  {{end}}
+
+  {{if .Attackers}}
+  <h2>IP attaquantes</h2>
+  <div class="panel">
+    <table>
+      <thead><tr><th>IP</th><th>Gravité max.</th><th>Alertes</th><th>Événements</th><th>Règles déclenchées</th></tr></thead>
+      <tbody>
+      {{range .Attackers}}
+        <tr>
+          <td class="mono">{{.IP}}</td>
+          <td><span class="badge {{sevClass .MaxSeverity}}">{{.MaxSeverity}}</span></td>
+          <td>{{.Alerts}}</td>
+          <td>{{.Events}}</td>
+          <td class="rules">{{join (dedupe .Rules) ", "}}</td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
+
+  <footer>logsentry · github.com/yaniscalo36-commits/logsentry</footer>
+</div>
+</body>
+</html>
