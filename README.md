@@ -6,6 +6,22 @@ Un **mini SIEM** en ligne de commande, écrit en **Go** sans aucune dépendance 
 
 ![Tableau de bord logsentry](docs/apercu.png)
 
+## 🔴 Essayer en ligne
+
+**[portfolio-ten-khaki-63.vercel.app/lab/logsentry](https://portfolio-ten-khaki-63.vercel.app/lab/logsentry/)**
+
+Déposez vos propres `auth.log` ou `access.log`, ou cliquez sur « Essayer avec des logs de démo ». Le même code Go est compilé en **WebAssembly** et tourne **dans votre navigateur**, donc vos logs ne quittent jamais votre ordinateur. La page applique une Content-Security-Policy stricte :
+
+- `connect-src 'self'` : aucune connexion possible vers un autre site ;
+- `'wasm-unsafe-eval'` : autorise uniquement l'exécution du WebAssembly, et pas `eval` en JavaScript ;
+- le rapport s'affiche dans une iframe `sandbox` sans scripts.
+
+Pour reconstruire la version web :
+
+```bash
+sh web/build.sh   # compile web/logsentry.wasm et copie les fichiers nécessaires
+```
+
 ## Exemple
 
 ```
@@ -133,7 +149,7 @@ Les tests couvrent la lecture des différents formats de logs, chaque règle de 
 
 - `main` : version stable
 - `develop` : intégration
-- `feature/parsers`, `feature/detection`, `feature/reports`, `docs/readme` : une branche par fonctionnalité
+- `feature/parsers`, `feature/detection`, `feature/reports`, `feature/wasm`, `docs/readme` : une branche par fonctionnalité
 
 ---
 

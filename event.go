@@ -48,19 +48,35 @@ type Stats struct {
 	Last    time.Time
 }
 
+// Source est un flux de log nommé : un fichier sur disque, ou un texte fourni par le navigateur.
+type Source struct {
+	Name   string
+	Reader io.Reader
+}
+
 // ReadLogs lit tous les fichiers et renvoie les événements triés par date.
 func ReadLogs(paths []string, ref time.Time) ([]Event, Stats, error) {
-	var events []Event
-	st := Stats{Files: paths}
+	var sources []Source
 	for _, p := range paths {
 		f, err := os.Open(p)
 		if err != nil {
-			return nil, st, err
+			return nil, Stats{Files: paths}, err
 		}
-		evs, lines, err := parseStream(f, p, ref)
-		f.Close()
+		defer f.Close()
+		sources = append(sources, Source{Name: p, Reader: f})
+	}
+	return ReadSources(sources, ref)
+}
+
+// ReadSources analyse des flux de logs et renvoie les événements triés par date.
+func ReadSources(sources []Source, ref time.Time) ([]Event, Stats, error) {
+	var events []Event
+	var st Stats
+	for _, s := range sources {
+		st.Files = append(st.Files, s.Name)
+		evs, lines, err := parseStream(s.Reader, s.Name, ref)
 		if err != nil {
-			return nil, st, fmt.Errorf("%s : %w", p, err)
+			return nil, st, fmt.Errorf("%s : %w", s.Name, err)
 		}
 		st.Lines += lines
 		events = append(events, evs...)
