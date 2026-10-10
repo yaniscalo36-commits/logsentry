@@ -1,3 +1,5 @@
+//go:build !(js && wasm)
+
 // logsentry est un mini SIEM : il analyse des logs SSH et web pour détecter des attaques.
 package main
 
