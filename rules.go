@@ -224,7 +224,7 @@ func detectSSH(events []Event, cfg Config) []Alert {
 			Rule: "SSH-BRUTEFORCE", Title: "Brute-force SSH",
 			Severity: High, IP: ip, Count: len(evs), First: evs[0].Time, Last: evs[len(evs)-1].Time,
 			Detail: fmt.Sprintf("%d échecs d'authentification sur %d compte(s), dont %d en moins de %s.",
-				len(evs), len(users), peak, cfg.BruteForceWindow),
+				len(evs), len(users), peak, humanDuration(cfg.BruteForceWindow)),
 			Advice:    "Bloquer l'IP (fail2ban), désactiver la connexion par mot de passe (PasswordAuthentication no) et interdire root (PermitRootLogin no).",
 			Technique: tBruteForce,
 			Evidence:  evidence(evs, 3),
@@ -307,7 +307,7 @@ func detectWebScan(events []Event, cfg Config) []Alert {
 		if peak < cfg.ScanThreshold {
 			continue
 		}
-		dur := evs[len(evs)-1].Time.Sub(evs[0].Time).Round(time.Second)
+		dur := humanDuration(evs[len(evs)-1].Time.Sub(evs[0].Time))
 		alerts = append(alerts, Alert{
 			Rule: "WEB-SCAN", Title: "Scan de répertoires",
 			Severity: Medium, IP: ip, Count: len(evs), First: evs[0].Time, Last: evs[len(evs)-1].Time,
@@ -318,6 +318,21 @@ func detectWebScan(events []Event, cfg Config) []Alert {
 		})
 	}
 	return alerts
+}
+
+// humanDuration affiche une durée lisible : « 56 s », « 5 min », « 1 h 20 min ».
+func humanDuration(d time.Duration) string {
+	d = d.Round(time.Second)
+	switch {
+	case d < time.Minute:
+		return fmt.Sprintf("%d s", int(d.Seconds()))
+	case d < time.Hour:
+		if s := int(d.Seconds()) % 60; s != 0 {
+			return fmt.Sprintf("%d min %d s", int(d.Minutes()), s)
+		}
+		return fmt.Sprintf("%d min", int(d.Minutes()))
+	}
+	return fmt.Sprintf("%d h %d min", int(d.Hours()), int(d.Minutes())%60)
 }
 
 func countStatus(evs []Event, status int) int {

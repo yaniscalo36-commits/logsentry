@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -142,4 +144,24 @@ func keys(m map[string]Alert) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+func TestHTMLDashboardEscapesLogContent(t *testing.T) {
+	// Les logs contiennent des données contrôlées par l'attaquant : le rapport ne doit
+	// jamais les interpréter comme du HTML (sinon le tableau de bord devient lui-même vulnérable au XSS).
+	evs := []Event{web("192.0.2.200", "/q?s=<script>alert(1)</script>", 400, "", 0)}
+	evs[0].Raw = `192.0.2.200 "GET /q?s=<script>alert(1)</script>"`
+	evs[0].Source = "access.log:1"
+	r := Analyze(evs, Stats{Files: []string{"access.log"}, Events: 1, Lines: 1, First: evs[0].Time, Last: evs[0].Time}, DefaultConfig)
+	path := t.TempDir() + "/r.html"
+	if err := writeHTML(path, r); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(path)
+	if strings.Contains(string(b), "<script>alert(1)") {
+		t.Fatal("contenu des logs injecté sans échappement dans le rapport HTML")
+	}
+	if !strings.Contains(string(b), "&lt;script&gt;alert(1)") {
+		t.Fatal("la preuve échappée devrait apparaître dans le rapport")
+	}
 }
